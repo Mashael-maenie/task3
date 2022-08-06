@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+      <title>Asalep</title>
+</head>
+
+
+
+<body style= "background-color: #CCFFFF ;text-align:center;" >
+ 
+    <input style="
+    text-align:center;
+    border:2px solid #003333;
+    border-radius:7px;
+    font-size:40px;
+    width: 500px; 
+    height: 200px;    
+    "
+    
+    <textarea type="text" id="speechToText" placeholder="اضغط و تحدث " onclick="record()"></textarea>
+    <button onclick="connectSerial()">Contact</button>
+
+    <script>
+        var port, textEncoder, writableStreamClosed, writer;
+        async function connectSerial() {
+            try {
+              
+                port = await navigator.serial.requestPort();
+                await port.open({ baudRate: 9600 });
+
+                textEncoder = new TextEncoderStream();
+                writableStreamClosed = textEncoder.readable.pipeTo(port.writable);
+
+                writer = textEncoder.writable.getWriter();
+                listenToPort();
+            } catch {
+                alert("Serial Connection Failed");
+            }
+        }
+
+
+        function record() {
+            var recognition = new webkitSpeechRecognition();
+            recognition.lang = "ar";
+
+            recognition.onresult = function (event) {
+
+                var a = document.getElementById('speechToText').value = event.results[0][0].transcript;
+                if (a == "يمين." || a=="يمين") {
+                    console.log(a)
+                    sendSerialLine();
+
+                }else if(a == "يسار." || a=="يسار") {
+                    console.log(a)
+                    sendSerialLineB();
+
+                }
+
+            }
+            recognition.start();
+
+        }
+
+
+     
+
+
+
+
+
+
+        async function listenToPort() {
+            const textDecoder = new TextDecoderStream();
+            const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
+            const reader = textDecoder.readable.getReader();
+            
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) {
+                    
+                    reader.releaseLock();
+                    break;
+                }
+                
+                appendToTerminal(value);
+            }
+
+
+        }
+
+        async function sendSerialLine() {
+            dataToSend1 = ' Right'
+            dataToSend1 = dataToSend1 + "\r\n";
+
+            await writer.write(dataToSend1);
+        }
+        async function sendSerialLineB() {
+            dataToSend = 'Left'
+            dataToSend = dataToSend + "\r\n";
+
+            await writer.write(dataToSend);
+        }
+
+
+
+
+
+
+
+
+    </script>
+
+
+</body>
+
+</html>
